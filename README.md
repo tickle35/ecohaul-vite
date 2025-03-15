@@ -75,7 +75,7 @@ The build artifacts will be stored in the `dist/` directory.
 
 ## Backend API
 
-The application expects a backend API running at `http://localhost:8080`. Make sure your backend server is running and properly configured.
+The application connects to a backend API running at `https://backend-qcnc.onrender.com`. The API configuration can be found in `src/config/api.js`.
 
 ## License
 

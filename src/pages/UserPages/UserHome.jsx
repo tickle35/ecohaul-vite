@@ -4,6 +4,7 @@ import Navbar from '../../components/Navbar';
 import useAuthStore from '../../store/authStore';
 import axios from 'axios';
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
+import { API_ENDPOINTS } from '../../config/api';
 
 const UserHome = () => {
   const { userInfo, fetchUserRequests } = useAuthStore();
@@ -96,7 +97,7 @@ const UserHome = () => {
       };
       
       console.log('Sending request data to API:', requestData);
-      console.log('API endpoint:', 'http://localhost:8080/api/request');
+      console.log('API endpoint:', API_ENDPOINTS.REQUEST.CREATE);
       
       // Set up axios with proper headers
       const config = {
@@ -105,7 +106,7 @@ const UserHome = () => {
         }
       };
       
-      const response = await axios.post('http://localhost:8080/api/request', requestData, config);
+      const response = await axios.post(API_ENDPOINTS.REQUEST.CREATE, requestData, config);
       console.log('API response:', response.data);
       
       // Show success message

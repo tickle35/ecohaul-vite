@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
+import { API_ENDPOINTS, createUrl } from '../config/api';
 
 const useAuthStore = create((set, get) => ({
   isLoading: true,
@@ -10,7 +11,7 @@ const useAuthStore = create((set, get) => ({
 
   login: async (email, password) => {
     try {
-      const res = await axios.post("http://localhost:8080/api/auth/login", { email, password });
+      const res = await axios.post(API_ENDPOINTS.AUTH.LOGIN, { email, password });
       const { email: userEmail, role, token, username, streamToken, id, comAssociate } = res.data;
       const userInfo = { email: userEmail, role, username, id, comAssociate };
       
@@ -44,8 +45,9 @@ const useAuthStore = create((set, get) => ({
     
     try {
       // Try the new endpoint first
-      console.log('Making API call to:', `http://localhost:8080/api/request/byemail?email=${email}`);
-      const res = await axios.get(`http://localhost:8080/api/request/byemail?email=${email}`);
+      const byEmailUrl = createUrl(API_ENDPOINTS.REQUEST.BY_EMAIL, { email });
+      console.log('Making API call to:', byEmailUrl);
+      const res = await axios.get(byEmailUrl);
       
       console.log('User requests API response:', res.data);
       console.log('Number of requests fetched:', res.data.length);
@@ -60,8 +62,9 @@ const useAuthStore = create((set, get) => ({
       
       // Fallback to the old endpoint if the new one fails
       try {
-        console.log('Falling back to old endpoint:', `http://localhost:8080/api/request/userhistory?author=${email}`);
-        const fallbackRes = await axios.get(`http://localhost:8080/api/request/userhistory?author=${email}`);
+        const userHistoryUrl = createUrl(API_ENDPOINTS.REQUEST.USER_HISTORY, { author: email });
+        console.log('Falling back to old endpoint:', userHistoryUrl);
+        const fallbackRes = await axios.get(userHistoryUrl);
         
         console.log('Fallback response:', fallbackRes.data);
         console.log('Number of requests fetched (fallback):', fallbackRes.data.length);
@@ -77,7 +80,7 @@ const useAuthStore = create((set, get) => ({
 
   register: async (username, email, password, phone, role, comAssociate, lat, long) => {
     try {
-      const res = await axios.post("http://localhost:8080/api/auth/register", {
+      const res = await axios.post(API_ENDPOINTS.AUTH.REGISTER, {
         username,
         email,
         password,

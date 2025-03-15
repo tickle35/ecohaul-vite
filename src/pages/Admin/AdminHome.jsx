@@ -4,6 +4,7 @@ import useAuthStore from '../../store/authStore';
 import axios from 'axios';
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 import searchIcon from '../../resources/searchIcon.png';
+import { API_ENDPOINTS } from '../../config/api';
 
 const AdminHome = () => {
   const { userInfo } = useAuthStore();
@@ -28,7 +29,7 @@ const AdminHome = () => {
   
   const fetchRequests = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/request/all');
+      const res = await axios.get(API_ENDPOINTS.REQUEST.ALL);
       setRequests(res.data);
       setFilteredRequests(res.data);
     } catch (error) {
@@ -38,7 +39,7 @@ const AdminHome = () => {
   
   const fetchDrivers = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/auth/drivers');
+      const res = await axios.get(API_ENDPOINTS.DRIVER.BASE);
       setDrivers(res.data);
     } catch (error) {
       console.error('Error fetching drivers:', error);
@@ -79,7 +80,7 @@ const AdminHome = () => {
     setError('');
     
     try {
-      await axios.put(`http://localhost:8080/api/request/assign/${selectedRequest._id}`, {
+      await axios.put(`${API_ENDPOINTS.REQUEST.ASSIGN_DRIVER}/${selectedRequest._id}`, {
         driverId: selectedDriver,
         status: 'in-progress'
       });

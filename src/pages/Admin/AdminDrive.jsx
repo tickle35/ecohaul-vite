@@ -3,6 +3,7 @@ import AdminNavbar from '../../components/AdminNavbar';
 import useAuthStore from '../../store/authStore';
 import axios from 'axios';
 import searchIcon from '../../resources/searchIcon.png';
+import { API_ENDPOINTS } from '../../config/api';
 
 const AdminDrive = () => {
   const { userInfo } = useAuthStore();
@@ -27,7 +28,7 @@ const AdminDrive = () => {
   
   const fetchDrivers = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/auth/drivers');
+      const res = await axios.get(API_ENDPOINTS.DRIVER.BASE);
       setDrivers(res.data);
       setFilteredDrivers(res.data);
     } catch (error) {
@@ -72,7 +73,7 @@ const AdminDrive = () => {
     setSuccess('');
     
     try {
-      await axios.post('http://localhost:8080/api/auth/register', {
+      await axios.post(API_ENDPOINTS.AUTH.REGISTER, {
         ...formData,
         role: 'driver',
         lat: 0,
