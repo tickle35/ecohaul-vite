@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import useAuthStore from '../../store/authStore';
 import axios from 'axios';
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 import { API_ENDPOINTS } from '../../config/api';
+import AirQualityMapLayer from '../../components/AirQualityMapLayer';
 
 const UserHome = () => {
   const { userInfo, fetchUserRequests } = useAuthStore();
   const navigate = useNavigate();
+  const mapRef = useRef(null);
+  const [mapBounds, setMapBounds] = useState(null);
   
   // Log user info on component mount
   console.log('UserHome - User Info:', userInfo);
@@ -56,14 +59,13 @@ const UserHome = () => {
     }
   };
   
-  const handleMapClick = (e) => {
-    const newLat = e.latLng.lat();
-    const newLng = e.latLng.lng();
+  const handleMapClick = (event) => {
+    const clickedLat = event.latLng.lat();
+    const clickedLng = event.latLng.lng();
     
-    console.log('Map clicked at:', { lat: newLat, lng: newLng });
-    setLat(newLat);
-    setLong(newLng);
-    setMarkerPosition({ lat: newLat, lng: newLng });
+    setLat(clickedLat);
+    setLong(clickedLng);
+    setMarkerPosition({ lat: clickedLat, lng: clickedLng });
   };
   
   const handleTypeChange = (e) => {
@@ -134,6 +136,42 @@ const UserHome = () => {
     height: '100%',
     borderRadius: '0.5rem'
   };
+
+  const handleMapLoad = (map) => {
+    mapRef.current = map;
+    setMapLoaded(true);
+    
+    // Set initial bounds
+    if (map && map.getBounds()) {
+      const bounds = map.getBounds();
+      const ne = bounds.getNorthEast();
+      const sw = bounds.getSouthWest();
+      
+      setMapBounds({
+        north: ne.lat(),
+        east: ne.lng(),
+        south: sw.lat(),
+        west: sw.lng()
+      });
+    }
+  };
+
+  const handleBoundsChanged = () => {
+    if (mapRef.current) {
+      const bounds = mapRef.current.getBounds();
+      if (bounds) {
+        const ne = bounds.getNorthEast();
+        const sw = bounds.getSouthWest();
+        
+        setMapBounds({
+          north: ne.lat(),
+          east: ne.lng(),
+          south: sw.lat(),
+          west: sw.lng()
+        });
+      }
+    }
+  };
   
   // Fallback API key in case environment variable is not set
   const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyB_oFQ3l8sdvksjPmf-q5lK75YPv0N2Kp4';
@@ -151,39 +189,50 @@ const UserHome = () => {
           </div>
         </div>
         
-        <div className="flex gap-6 h-[calc(100vh-120px)]">
+        <div className="flex flex-1 space-x-6">
           {/* Map */}
-          <div className="w-3/5 bg-white rounded-lg shadow-md overflow-hidden">
-            <LoadScript 
-              googleMapsApiKey={googleMapsApiKey}
-              onLoad={() => {
-                console.log('Google Maps script loaded');
-                setMapLoaded(true);
-              }}
-              onError={(error) => {
-                console.error('Google Maps script error:', error);
-                setError('Failed to load Google Maps. Please check your API key.');
-              }}
-            >
-              {mapLoaded ? (
-                <GoogleMap
-                  mapContainerStyle={mapContainerStyle}
-                  center={mapCenter}
-                  zoom={13}
-                  onClick={handleMapClick}
-                  onLoad={() => {
-                    console.log('Map loaded successfully');
-                  }}
-                >
-                  {markerPosition && (
-                    <Marker position={markerPosition} />
-                  )}
-                </GoogleMap>
-              ) : (
-                <div className="flex items-center justify-center h-full">
+          <div className="w-3/5 bg-white rounded-lg shadow-md relative">
+            <LoadScript googleMapsApiKey={googleMapsApiKey} onLoad={() => console.log('Script loaded')}>
+              {mapLoaded || (
+                <div className="absolute inset-0 flex items-center justify-center">
                   <p>Loading map...</p>
                 </div>
               )}
+              <GoogleMap
+                mapContainerStyle={mapContainerStyle}
+                center={mapCenter}
+                zoom={14}
+                onClick={handleMapClick}
+                onLoad={handleMapLoad}
+                onBoundsChanged={handleBoundsChanged}
+                options={{
+                  streetViewControl: false,
+                  mapTypeControl: false,
+                  fullscreenControl: true,
+                }}
+              >
+                {markerPosition && (
+                  <Marker
+                    position={markerPosition}
+                    draggable={true}
+                    onDragEnd={(e) => {
+                      const newLat = e.latLng.lat();
+                      const newLng = e.latLng.lng();
+                      setLat(newLat);
+                      setLong(newLng);
+                      setMarkerPosition({ lat: newLat, lng: newLng });
+                    }}
+                  />
+                )}
+                
+                {/* Air Quality Map Layer */}
+                {mapBounds && mapRef.current && (
+                  <AirQualityMapLayer 
+                    bounds={mapBounds}
+                    mapRef={mapRef}
+                  />
+                )}
+              </GoogleMap>
             </LoadScript>
           </div>
           

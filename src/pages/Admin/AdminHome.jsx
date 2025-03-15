@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AdminNavbar from '../../components/AdminNavbar';
 import useAuthStore from '../../store/authStore';
 import axios from 'axios';
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 import searchIcon from '../../resources/searchIcon.png';
 import { API_ENDPOINTS } from '../../config/api';
+import AirQualityMapLayer from '../../components/AirQualityMapLayer';
 
 const AdminHome = () => {
   const { userInfo } = useAuthStore();
@@ -17,6 +18,8 @@ const AdminHome = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [mapError, setMapError] = useState(false);
+  const mapRef = useRef(null);
+  const [mapBounds, setMapBounds] = useState(null);
   
   const [mapCenter, setMapCenter] = useState({
     lat: 5.6037,  // Default to Accra, Ghana
@@ -130,9 +133,41 @@ const AdminHome = () => {
   };
   
   // Handle map load success
-  const handleMapLoad = () => {
+  const handleMapLoad = (map) => {
     console.log('Google Maps loaded successfully');
     setMapError(false);
+    mapRef.current = map;
+    
+    // Set initial bounds
+    if (map && map.getBounds()) {
+      const bounds = map.getBounds();
+      const ne = bounds.getNorthEast();
+      const sw = bounds.getSouthWest();
+      
+      setMapBounds({
+        north: ne.lat(),
+        east: ne.lng(),
+        south: sw.lat(),
+        west: sw.lng()
+      });
+    }
+  };
+
+  const handleBoundsChanged = () => {
+    if (mapRef.current) {
+      const bounds = mapRef.current.getBounds();
+      if (bounds) {
+        const ne = bounds.getNorthEast();
+        const sw = bounds.getSouthWest();
+        
+        setMapBounds({
+          north: ne.lat(),
+          east: ne.lng(),
+          south: sw.lat(),
+          west: sw.lng()
+        });
+      }
+    }
   };
   
   return (
@@ -228,7 +263,7 @@ const AdminHome = () => {
               ) : (
                 <LoadScript 
                   googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
-                  onLoad={handleMapLoad}
+                  onLoad={() => console.log('Script loaded')}
                   onError={handleMapError}
                   loadingElement={
                     <div className="h-full flex items-center justify-center bg-gray-100">
@@ -240,14 +275,23 @@ const AdminHome = () => {
                     mapContainerStyle={mapContainerStyle}
                     center={mapCenter}
                     zoom={13}
-                    onLoad={() => console.log('Map instance loaded')}
+                    onLoad={handleMapLoad}
+                    onBoundsChanged={handleBoundsChanged}
                   >
                     {selectedRequest && selectedRequest.lat && (
                       <Marker 
-                        position={{ 
-                          lat: selectedRequest.lat, 
-                          lng: selectedRequest.lng || selectedRequest.long 
-                        }} 
+                        position={{
+                          lat: parseFloat(selectedRequest.lat),
+                          lng: parseFloat(selectedRequest.lng || selectedRequest.long)
+                        }}
+                      />
+                    )}
+                    
+                    {/* Air Quality Map Layer */}
+                    {mapBounds && mapRef.current && (
+                      <AirQualityMapLayer 
+                        bounds={mapBounds}
+                        mapRef={mapRef}
                       />
                     )}
                   </GoogleMap>
