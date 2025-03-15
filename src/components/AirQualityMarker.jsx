@@ -1,48 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { OverlayView } from '@react-google-maps/api';
-import { getAirQualityByGeoLocation, getAQIColor } from '../services/airQualityService';
-import { InfoWindow } from '@react-google-maps/api';
+import React, { useState, memo } from 'react';
+import { OverlayView, InfoWindow } from '@react-google-maps/api';
+import { getAQIColor, getAQIDescription } from '../services/airQualityService';
 
-const AirQualityMarker = ({ position, onClick }) => {
-  const [airQualityData, setAirQualityData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const AirQualityMarker = ({ position, aqi, station, onClick }) => {
   const [showInfoWindow, setShowInfoWindow] = useState(false);
 
-  useEffect(() => {
-    const fetchAirQuality = async () => {
-      if (!position || !position.lat || !position.lng) return;
-      
-      setLoading(true);
-      try {
-        const data = await getAirQualityByGeoLocation(position.lat, position.lng);
-        if (data && data.status === 'ok') {
-          setAirQualityData(data.data);
-        } else {
-          setError('Could not fetch air quality data');
-        }
-      } catch (err) {
-        setError('Error fetching air quality data');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAirQuality();
-  }, [position]);
+  // If no AQI value is provided, don't render anything
+  if (!aqi || !position || !position.lat || !position.lng) {
+    return null;
+  }
 
   const handleMarkerClick = () => {
     setShowInfoWindow(!showInfoWindow);
     if (onClick) onClick();
   };
 
-  if (loading || error || !airQualityData) {
-    return null;
-  }
-
-  const aqi = airQualityData.aqi;
   const color = getAQIColor(aqi);
+  const description = getAQIDescription(aqi);
 
   return (
     <>
@@ -88,18 +62,12 @@ const AirQualityMarker = ({ position, onClick }) => {
                 <span className="text-white font-bold">{aqi}</span>
               </div>
               <div>
-                <div className="font-medium text-sm">
-                  {airQualityData.aqi <= 50 ? 'Good' :
-                   airQualityData.aqi <= 100 ? 'Moderate' :
-                   airQualityData.aqi <= 150 ? 'Unhealthy for Sensitive Groups' :
-                   airQualityData.aqi <= 200 ? 'Unhealthy' :
-                   airQualityData.aqi <= 300 ? 'Very Unhealthy' : 'Hazardous'}
-                </div>
-                <div className="text-xs text-gray-500">{airQualityData.city?.name || 'Unknown location'}</div>
+                <div className="font-medium text-sm">{description}</div>
+                <div className="text-xs text-gray-500">{station?.station?.name || 'Unknown location'}</div>
               </div>
             </div>
-            {airQualityData.dominentpol && (
-              <div className="text-xs mt-1">Main Pollutant: {airQualityData.dominentpol}</div>
+            {station?.dominentpol && (
+              <div className="text-xs mt-1">Main Pollutant: {station.dominentpol}</div>
             )}
             <div className="text-xs text-gray-400 mt-2">Source: World Air Quality Index Project</div>
           </div>
@@ -109,4 +77,5 @@ const AirQualityMarker = ({ position, onClick }) => {
   );
 };
 
-export default AirQualityMarker; 
+// Use memo to prevent unnecessary re-renders
+export default memo(AirQualityMarker); 

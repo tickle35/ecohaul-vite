@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import useAuthStore from './store/authStore';
+import GoogleMapsProvider from './components/GoogleMapsProvider';
 
 // Import pages
 import Login from './pages/Auth/Login';
@@ -64,9 +65,11 @@ function App() {
   );
 
   return (
-    <BrowserRouter>
-      {renderRoutes()}
-    </BrowserRouter>
+    <GoogleMapsProvider>
+      <BrowserRouter>
+        {renderRoutes()}
+      </BrowserRouter>
+    </GoogleMapsProvider>
   );
 }
 

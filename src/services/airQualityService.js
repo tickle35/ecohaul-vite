@@ -93,6 +93,7 @@ export const createAQIInfoWindowContent = (data) => {
   `;
 };
 
+// Export all functions
 export default {
   getAirQualityByGeoLocation,
   getAQIColor,

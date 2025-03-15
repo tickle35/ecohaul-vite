@@ -3,15 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import useAuthStore from '../../store/authStore';
 import axios from 'axios';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
+import { GoogleMap, Marker } from '@react-google-maps/api';
 import { API_ENDPOINTS } from '../../config/api';
 import AirQualityMapLayer from '../../components/AirQualityMapLayer';
+import { useGoogleMaps } from '../../components/GoogleMapsProvider';
 
 const UserHome = () => {
   const { userInfo, fetchUserRequests } = useAuthStore();
   const navigate = useNavigate();
   const mapRef = useRef(null);
   const [mapBounds, setMapBounds] = useState(null);
+  const { isLoaded, loadError } = useGoogleMaps();
   
   // Log user info on component mount
   console.log('UserHome - User Info:', userInfo);
@@ -22,7 +24,6 @@ const UserHome = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [markerPosition, setMarkerPosition] = useState(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
   
   const [mapCenter, setMapCenter] = useState({
     lat: 5.6037,  // Default to Accra, Ghana
@@ -49,6 +50,31 @@ const UserHome = () => {
         setLong(longitude);
         setMarkerPosition({ lat: latitude, lng: longitude });
         setMapCenter({ lat: latitude, lng: longitude });
+        
+        // Set initial bounds based on user location
+        if (mapRef.current) {
+          const map = mapRef.current;
+          const bounds = map.getBounds();
+          if (bounds) {
+            const ne = bounds.getNorthEast();
+            const sw = bounds.getSouthWest();
+            
+            setMapBounds({
+              north: ne.lat(),
+              east: ne.lng(),
+              south: sw.lat(),
+              west: sw.lng()
+            });
+          } else {
+            // If bounds not available, create a default bounds around the user location
+            setMapBounds({
+              north: latitude + 0.1,
+              south: latitude - 0.1,
+              east: longitude + 0.1,
+              west: longitude - 0.1
+            });
+          }
+        }
       }, (error) => {
         console.error('Geolocation error:', error);
         setError('Error: The Geolocation service failed.');
@@ -138,22 +164,36 @@ const UserHome = () => {
   };
 
   const handleMapLoad = (map) => {
+    console.log('Map loaded');
     mapRef.current = map;
-    setMapLoaded(true);
     
     // Set initial bounds
-    if (map && map.getBounds()) {
-      const bounds = map.getBounds();
-      const ne = bounds.getNorthEast();
-      const sw = bounds.getSouthWest();
-      
-      setMapBounds({
-        north: ne.lat(),
-        east: ne.lng(),
-        south: sw.lat(),
-        west: sw.lng()
-      });
-    }
+    setTimeout(() => {
+      if (map) {
+        const bounds = map.getBounds();
+        if (bounds) {
+          const ne = bounds.getNorthEast();
+          const sw = bounds.getSouthWest();
+          
+          console.log('Setting initial map bounds');
+          setMapBounds({
+            north: ne.lat(),
+            east: ne.lng(),
+            south: sw.lat(),
+            west: sw.lng()
+          });
+        } else {
+          // If bounds not available, create a default bounds around the center
+          console.log('No bounds available, using default');
+          setMapBounds({
+            north: mapCenter.lat + 0.1,
+            south: mapCenter.lat - 0.1,
+            east: mapCenter.lng + 0.1,
+            west: mapCenter.lng - 0.1
+          });
+        }
+      }
+    }, 1000); // Delay to ensure map is fully loaded
   };
 
   const handleBoundsChanged = () => {
@@ -163,6 +203,7 @@ const UserHome = () => {
         const ne = bounds.getNorthEast();
         const sw = bounds.getSouthWest();
         
+        console.log('Map bounds changed');
         setMapBounds({
           north: ne.lat(),
           east: ne.lng(),
@@ -172,9 +213,6 @@ const UserHome = () => {
       }
     }
   };
-  
-  // Fallback API key in case environment variable is not set
-  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyB_oFQ3l8sdvksjPmf-q5lK75YPv0N2Kp4';
   
   return (
     <div className="flex h-screen bg-background">
@@ -192,12 +230,15 @@ const UserHome = () => {
         <div className="flex flex-1 space-x-6">
           {/* Map */}
           <div className="w-3/5 bg-white rounded-lg shadow-md relative">
-            <LoadScript googleMapsApiKey={googleMapsApiKey} onLoad={() => console.log('Script loaded')}>
-              {mapLoaded || (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <p>Loading map...</p>
-                </div>
-              )}
+            {!isLoaded ? (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <p>Loading map...</p>
+              </div>
+            ) : loadError ? (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <p className="text-red-500">Error loading maps</p>
+              </div>
+            ) : (
               <GoogleMap
                 mapContainerStyle={mapContainerStyle}
                 center={mapCenter}
@@ -226,14 +267,12 @@ const UserHome = () => {
                 )}
                 
                 {/* Air Quality Map Layer */}
-                {mapBounds && mapRef.current && (
-                  <AirQualityMapLayer 
-                    bounds={mapBounds}
-                    mapRef={mapRef}
-                  />
-                )}
+                <AirQualityMapLayer 
+                  bounds={mapBounds}
+                  mapRef={mapRef}
+                />
               </GoogleMap>
-            </LoadScript>
+            )}
           </div>
           
           {/* Form */}
