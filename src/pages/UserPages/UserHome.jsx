@@ -14,6 +14,7 @@ const UserHome = () => {
   const mapRef = useRef(null);
   const [mapBounds, setMapBounds] = useState(null);
   const { isLoaded, loadError } = useGoogleMaps();
+  const [showAirQuality, setShowAirQuality] = useState(true);
   
   // Log user info on component mount
   console.log('UserHome - User Info:', userInfo);
@@ -221,9 +222,23 @@ const UserHome = () => {
       <div className="flex-1 flex flex-col p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Make a Haul Request</h1>
-          <div>
-            <p className="text-sm text-gray-600">User: {userInfo?.email || 'Not logged in'}</p>
-            {userInfo?.id && <p className="text-xs text-gray-500">ID: {userInfo.id}</p>}
+          <div className="flex items-center">
+            <div className="mr-4">
+              <label className="inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={showAirQuality} 
+                  onChange={() => setShowAirQuality(!showAirQuality)}
+                  className="sr-only peer"
+                />
+                <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                <span className="ms-3 text-sm font-medium text-gray-700">Air Quality</span>
+              </label>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">User: {userInfo?.email || 'Not logged in'}</p>
+              {userInfo?.id && <p className="text-xs text-gray-500">ID: {userInfo.id}</p>}
+            </div>
           </div>
         </div>
         
@@ -239,39 +254,74 @@ const UserHome = () => {
                 <p className="text-red-500">Error loading maps</p>
               </div>
             ) : (
-              <GoogleMap
-                mapContainerStyle={mapContainerStyle}
-                center={mapCenter}
-                zoom={14}
-                onClick={handleMapClick}
-                onLoad={handleMapLoad}
-                onBoundsChanged={handleBoundsChanged}
-                options={{
-                  streetViewControl: false,
-                  mapTypeControl: false,
-                  fullscreenControl: true,
-                }}
-              >
-                {markerPosition && (
-                  <Marker
-                    position={markerPosition}
-                    draggable={true}
-                    onDragEnd={(e) => {
-                      const newLat = e.latLng.lat();
-                      const newLng = e.latLng.lng();
-                      setLat(newLat);
-                      setLong(newLng);
-                      setMarkerPosition({ lat: newLat, lng: newLng });
-                    }}
-                  />
-                )}
+              <>
+                <GoogleMap
+                  mapContainerStyle={mapContainerStyle}
+                  center={mapCenter}
+                  zoom={14}
+                  onClick={handleMapClick}
+                  onLoad={handleMapLoad}
+                  onBoundsChanged={handleBoundsChanged}
+                  options={{
+                    streetViewControl: false,
+                    mapTypeControl: false,
+                    fullscreenControl: true,
+                  }}
+                >
+                  {markerPosition && (
+                    <Marker
+                      position={markerPosition}
+                      draggable={true}
+                      onDragEnd={(e) => {
+                        const newLat = e.latLng.lat();
+                        const newLng = e.latLng.lng();
+                        setLat(newLat);
+                        setLong(newLng);
+                        setMarkerPosition({ lat: newLat, lng: newLng });
+                      }}
+                    />
+                  )}
+                  
+                  {/* Air Quality Map Layer */}
+                  {showAirQuality && (
+                    <AirQualityMapLayer 
+                      bounds={mapBounds}
+                      mapRef={mapRef}
+                    />
+                  )}
+                </GoogleMap>
                 
-                {/* Air Quality Map Layer */}
-                <AirQualityMapLayer 
-                  bounds={mapBounds}
-                  mapRef={mapRef}
-                />
-              </GoogleMap>
+                {/* Air Quality Legend */}
+                {showAirQuality && (
+                  <div className="absolute bottom-2 right-2 bg-white p-2 rounded-md shadow-md text-xs">
+                    <div className="font-bold mb-1">Air Quality Index</div>
+                    <div className="flex items-center mb-1">
+                      <div className="w-3 h-3 rounded-full bg-[#009966] mr-1"></div>
+                      <span>0-50: Good</span>
+                    </div>
+                    <div className="flex items-center mb-1">
+                      <div className="w-3 h-3 rounded-full bg-[#FFDE33] mr-1"></div>
+                      <span>51-100: Moderate</span>
+                    </div>
+                    <div className="flex items-center mb-1">
+                      <div className="w-3 h-3 rounded-full bg-[#FF9933] mr-1"></div>
+                      <span>101-150: Unhealthy for Sensitive Groups</span>
+                    </div>
+                    <div className="flex items-center mb-1">
+                      <div className="w-3 h-3 rounded-full bg-[#CC0033] mr-1"></div>
+                      <span>151-200: Unhealthy</span>
+                    </div>
+                    <div className="flex items-center mb-1">
+                      <div className="w-3 h-3 rounded-full bg-[#660099] mr-1"></div>
+                      <span>201-300: Very Unhealthy</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 rounded-full bg-[#7E0023] mr-1"></div>
+                      <span>301+: Hazardous</span>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
           

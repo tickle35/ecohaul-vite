@@ -22,6 +22,7 @@ const AdminHome = () => {
   const mapRef = useRef(null);
   const [mapBounds, setMapBounds] = useState(null);
   const { isLoaded, loadError } = useGoogleMaps();
+  const [showAirQuality, setShowAirQuality] = useState(true);
   
   const [mapCenter, setMapCenter] = useState({
     lat: 5.6037,  // Default to Accra, Ghana
@@ -193,15 +194,29 @@ const AdminHome = () => {
               Welcome, {userInfo?.username || 'Admin'} | {userInfo?.comAssociate || 'Company'}
             </div>
           </div>
-          <div className="w-1/2 bg-white rounded-md flex items-center px-4 py-2 border border-gray-200">
-            <img src={searchIcon} alt="Search" className="w-5 h-5 mr-3" />
-            <input
-              type="text"
-              placeholder="Search requests..."
-              value={searchTerm}
-              onChange={handleSearch}
-              className="flex-1 outline-none text-gray-500 bg-white"
-            />
+          <div className="flex items-center">
+            <div className="mr-4">
+              <label className="inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={showAirQuality} 
+                  onChange={() => setShowAirQuality(!showAirQuality)}
+                  className="sr-only peer"
+                />
+                <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                <span className="ms-3 text-sm font-medium text-gray-700">Air Quality</span>
+              </label>
+            </div>
+            <div className="w-1/2 bg-white rounded-md flex items-center px-4 py-2 border border-gray-200">
+              <img src={searchIcon} alt="Search" className="w-5 h-5 mr-3" />
+              <input
+                type="text"
+                placeholder="Search requests..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className="flex-1 outline-none text-gray-500 bg-white"
+              />
+            </div>
           </div>
         </div>
         
@@ -275,28 +290,68 @@ const AdminHome = () => {
                   </div>
                 </div>
               ) : (
-                <GoogleMap
-                  mapContainerStyle={mapContainerStyle}
-                  center={mapCenter}
-                  zoom={13}
-                  onLoad={handleMapLoad}
-                  onBoundsChanged={handleBoundsChanged}
-                >
-                  {selectedRequest && selectedRequest.lat && (
-                    <Marker 
-                      position={{
-                        lat: parseFloat(selectedRequest.lat),
-                        lng: parseFloat(selectedRequest.lng || selectedRequest.long)
-                      }}
-                    />
-                  )}
+                <>
+                  <GoogleMap
+                    mapContainerStyle={mapContainerStyle}
+                    center={mapCenter}
+                    zoom={13}
+                    onLoad={handleMapLoad}
+                    onBoundsChanged={handleBoundsChanged}
+                    options={{
+                      streetViewControl: false,
+                      mapTypeControl: true,
+                      fullscreenControl: true,
+                    }}
+                  >
+                    {selectedRequest && selectedRequest.lat && (
+                      <Marker 
+                        position={{
+                          lat: parseFloat(selectedRequest.lat),
+                          lng: parseFloat(selectedRequest.lng || selectedRequest.long)
+                        }}
+                      />
+                    )}
+                    
+                    {/* Air Quality Map Layer */}
+                    {showAirQuality && (
+                      <AirQualityMapLayer 
+                        bounds={mapBounds}
+                        mapRef={mapRef}
+                      />
+                    )}
+                  </GoogleMap>
                   
-                  {/* Air Quality Map Layer */}
-                  <AirQualityMapLayer 
-                    bounds={mapBounds}
-                    mapRef={mapRef}
-                  />
-                </GoogleMap>
+                  {/* Air Quality Legend */}
+                  {showAirQuality && (
+                    <div className="absolute bottom-2 right-2 bg-white p-2 rounded-md shadow-md text-xs">
+                      <div className="font-bold mb-1">Air Quality Index</div>
+                      <div className="flex items-center mb-1">
+                        <div className="w-3 h-3 rounded-full bg-[#009966] mr-1"></div>
+                        <span>0-50: Good</span>
+                      </div>
+                      <div className="flex items-center mb-1">
+                        <div className="w-3 h-3 rounded-full bg-[#FFDE33] mr-1"></div>
+                        <span>51-100: Moderate</span>
+                      </div>
+                      <div className="flex items-center mb-1">
+                        <div className="w-3 h-3 rounded-full bg-[#FF9933] mr-1"></div>
+                        <span>101-150: Unhealthy for Sensitive Groups</span>
+                      </div>
+                      <div className="flex items-center mb-1">
+                        <div className="w-3 h-3 rounded-full bg-[#CC0033] mr-1"></div>
+                        <span>151-200: Unhealthy</span>
+                      </div>
+                      <div className="flex items-center mb-1">
+                        <div className="w-3 h-3 rounded-full bg-[#660099] mr-1"></div>
+                        <span>201-300: Very Unhealthy</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 rounded-full bg-[#7E0023] mr-1"></div>
+                        <span>301+: Hazardous</span>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
             
