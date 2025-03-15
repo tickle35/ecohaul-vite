@@ -34,6 +34,11 @@ export const API_ENDPOINTS = {
     BASE: `${API_BASE_URL}/api/auth/drivers`,
   },
   
+  // Dashboard endpoints
+  DASHBOARD: {
+    STATS: `${API_BASE_URL}/api/dashboard/stats`,
+  },
+  
   // Other endpoints
   USER_DATA: `${API_BASE_URL}/userData`,
   HEALTH: `${API_BASE_URL}/health`,
