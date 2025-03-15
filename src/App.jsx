@@ -20,40 +20,52 @@ function App() {
     checkAuth();
   }, [checkAuth]);
 
+  // Define all routes that should be accessible
+  const renderRoutes = () => (
+    <Routes>
+      {userToken ? (
+        // If the user is logged in
+        userInfo?.role === 'user' ? (
+          // If the user is a regular user
+          <>
+            <Route path="/makerequest" element={<UserHome />} />
+            <Route path="/userhome" element={<User />} />
+            <Route path="/aiPage" element={<AiPage />} />
+            <Route path="/" element={<Navigate replace to="/userhome" />} />
+            <Route path="*" element={<Navigate replace to="/userhome" />} />
+          </>
+        ) : (
+          // If the user is an admin
+          <>
+            <Route path="/admin" element={<AdminHome />} />
+            <Route path="/admindriver" element={<AdminDrive />} />
+            <Route path="/admindash" element={<AdminDash />} />
+            <Route path="/message" element={<Chat />} />
+            <Route path="/" element={<Navigate replace to="/admin" />} />
+            <Route path="*" element={<Navigate replace to="/admin" />} />
+          </>
+        )
+      ) : (
+        // If the user is not logged in
+        <>
+          <Route path="/" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          {/* <Route path="/admin" element={<Login />} />
+          <Route path="/admindriver" element={<Login />} />
+          <Route path="/admindash" element={<Login />} />
+          <Route path="/makerequest" element={<Login />} />
+          <Route path="/userhome" element={<Login />} />
+          <Route path="/aiPage" element={<Login />} />
+          <Route path="/message" element={<Login />} /> */}
+          <Route path="*" element={<Navigate replace to="/" />} />
+        </>
+      )}
+    </Routes>
+  );
+
   return (
     <BrowserRouter>
-      <Routes>
-        {userToken ? (
-          // If the user is logged in
-          userInfo?.role === 'user' ? (
-            // If the user is a regular user
-            <>
-              <Route path="/makerequest" element={<UserHome />} />
-              <Route path="/userhome" element={<User />} />
-              <Route path="/aiPage" element={<AiPage />} />
-              <Route path="/" element={<Navigate replace to="/userhome" />} />
-              <Route path="*" element={<Navigate replace to="/userhome" />} />
-            </>
-          ) : (
-            // If the user is an admin
-            <>
-              <Route path="/admin" element={<AdminHome />} />
-              <Route path="/admindriver" element={<AdminDrive />} />
-              <Route path="/admindash" element={<AdminDash />} />
-              <Route path="/message" element={<Chat />} />
-              <Route path="/" element={<Navigate replace to="/admin" />} />
-              <Route path="*" element={<Navigate replace to="/admin" />} />
-            </>
-          )
-        ) : (
-          // If the user is not logged in
-          <>
-            <Route path="/" element={<Login />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="*" element={<Navigate replace to="/" />} />
-          </>
-        )}
-      </Routes>
+      {renderRoutes()}
     </BrowserRouter>
   );
 }

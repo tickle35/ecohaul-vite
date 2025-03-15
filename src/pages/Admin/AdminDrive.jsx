@@ -21,18 +21,23 @@ const AdminDrive = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [fetchError, setFetchError] = useState('');
   
   useEffect(() => {
     fetchDrivers();
   }, []);
   
   const fetchDrivers = async () => {
+    setFetchError('');
     try {
-      const res = await axios.get(API_ENDPOINTS.DRIVER.BASE);
+      console.log('Fetching drivers from:', API_ENDPOINTS.AUTH.DRIVERS);
+      const res = await axios.get(API_ENDPOINTS.AUTH.DRIVERS);
+      console.log('Drivers data:', res.data);
       setDrivers(res.data);
       setFilteredDrivers(res.data);
     } catch (error) {
       console.error('Error fetching drivers:', error);
+      setFetchError('Failed to fetch drivers. Please try again later.');
     }
   };
   
@@ -123,6 +128,18 @@ const AdminDrive = () => {
           <div className="w-2/3 bg-white rounded-lg shadow-md p-4 overflow-hidden flex flex-col">
             <h2 className="text-xl font-bold text-gray-800 mb-4">All Drivers</h2>
             
+            {fetchError && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                {fetchError}
+                <button 
+                  onClick={fetchDrivers}
+                  className="ml-4 underline text-blue-600 hover:text-blue-800"
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+            
             <div className="overflow-y-auto flex-1">
               {filteredDrivers.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4">
@@ -151,7 +168,7 @@ const AdminDrive = () => {
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  No drivers found.
+                  {fetchError ? 'Error loading drivers.' : 'No drivers found.'}
                 </div>
               )}
             </div>

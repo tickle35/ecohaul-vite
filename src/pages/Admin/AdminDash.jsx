@@ -66,6 +66,7 @@ const AdminDash = () => {
   
   const barChartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
@@ -96,51 +97,68 @@ const AdminDash = () => {
     ],
   };
   
+  const doughnutOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right',
+      }
+    }
+  };
+  
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden">
       <AdminNavbar />
       
-      <div className="flex-1 flex flex-col p-6">
-        <div className="flex justify-between items-center mb-6">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="w-full p-4 flex justify-between items-center bg-white shadow-sm">
           <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
           <div className="text-sm text-gray-600">
-            Welcome, {userInfo?.username} | {userInfo?.comAssociate}
+            Welcome, {userInfo?.username || 'Admin'} | {userInfo?.comAssociate || 'Company'}
           </div>
         </div>
         
-        {/* Stats cards */}
-        <div className="grid grid-cols-4 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <h2 className="text-gray-500 text-sm mb-1">Total Requests</h2>
-            <p className="text-3xl font-bold text-gray-800">{stats.totalRequests}</p>
+        {/* Main content with scrolling */}
+        <div className="flex-1 p-6 overflow-y-auto">
+          {/* Stats cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div className="bg-white rounded-lg shadow-md p-4">
+              <h2 className="text-gray-500 text-sm mb-1">Total Requests</h2>
+              <p className="text-3xl font-bold text-gray-800">{stats.totalRequests}</p>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow-md p-4">
+              <h2 className="text-yellow-500 text-sm mb-1">Pending</h2>
+              <p className="text-3xl font-bold text-gray-800">{stats.pendingRequests}</p>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow-md p-4">
+              <h2 className="text-blue-500 text-sm mb-1">In Progress</h2>
+              <p className="text-3xl font-bold text-gray-800">{stats.inProgressRequests}</p>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow-md p-4">
+              <h2 className="text-green-500 text-sm mb-1">Completed</h2>
+              <p className="text-3xl font-bold text-gray-800">{stats.completedRequests}</p>
+            </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <h2 className="text-yellow-500 text-sm mb-1">Pending</h2>
-            <p className="text-3xl font-bold text-gray-800">{stats.pendingRequests}</p>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <h2 className="text-blue-500 text-sm mb-1">In Progress</h2>
-            <p className="text-3xl font-bold text-gray-800">{stats.inProgressRequests}</p>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <h2 className="text-green-500 text-sm mb-1">Completed</h2>
-            <p className="text-3xl font-bold text-gray-800">{stats.completedRequests}</p>
-          </div>
-        </div>
-        
-        {/* Charts */}
-        <div className="flex gap-6 flex-1">
-          <div className="w-2/3 bg-white rounded-lg shadow-md p-4">
-            <Bar data={barChartData} options={barChartOptions} />
-          </div>
-          
-          <div className="w-1/3 bg-white rounded-lg shadow-md p-4 flex flex-col">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Waste Types</h2>
-            <div className="flex-1 flex items-center justify-center">
-              <Doughnut data={doughnutChartData} />
+          {/* Charts */}
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div className="w-full lg:w-2/3 bg-white rounded-lg shadow-md p-4">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Monthly Activity</h2>
+              <div className="h-80">
+                <Bar data={barChartData} options={barChartOptions} />
+              </div>
+            </div>
+            
+            <div className="w-full lg:w-1/3 bg-white rounded-lg shadow-md p-4 flex flex-col">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Waste Types</h2>
+              <div className="flex-1 flex items-center justify-center h-80">
+                <Doughnut data={doughnutChartData} options={doughnutOptions} />
+              </div>
             </div>
           </div>
         </div>

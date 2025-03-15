@@ -15,6 +15,7 @@ export const API_ENDPOINTS = {
     LOGIN: `${API_BASE_URL}/api/auth/login`,
     REGISTER: `${API_BASE_URL}/api/auth/register`,
     VERIFY: `${API_BASE_URL}/verifyuser`,
+    DRIVERS: `${API_BASE_URL}/api/auth/drivers`,
   },
   
   // Request endpoints
@@ -30,7 +31,7 @@ export const API_ENDPOINTS = {
   
   // Driver endpoints
   DRIVER: {
-    BASE: `${API_BASE_URL}/api/drivers`,
+    BASE: `${API_BASE_URL}/api/auth/drivers`,
   },
   
   // Other endpoints
